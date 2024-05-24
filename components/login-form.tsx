@@ -28,7 +28,6 @@ interface ILoginFormProps {
 
 export function LoginForm({ state: { errors, success } }: ILoginFormProps) {
   const { pending } = useFormStatus();
-  console.log(errors);
   return (
     <>
       <div>
