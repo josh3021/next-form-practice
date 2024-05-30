@@ -7,7 +7,7 @@ interface IRoutes {
 }
 
 const publicOnlyUrls: IRoutes = {
-  "/": true,
+  "/": false,
   "/log-in": true,
   "/create-account": true,
   "/profile": false,
@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
     //로그인 상태이면
   } else {
     if (exists) {
-      return NextResponse.redirect(new URL("/profile", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 }

@@ -46,7 +46,7 @@ export async function login(_: any, formData: FormData) {
 
   if (user && ok) {
     await sessionLogin(user.id);
-    return redirect("/profile");
+    return redirect("/");
   }
   return {
     fieldErrors: {
