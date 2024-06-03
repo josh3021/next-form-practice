@@ -1,5 +1,6 @@
 "use client";
 
+import { AddTweet } from "@/components/tweets/add-tweet";
 import { TweetsList } from "@/components/tweets/tweets-list";
 import { Prisma } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
@@ -63,7 +64,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen py-56">
-      <div className="min-w-40 max-w-2xl px-16 mx-auto py-8 flex flex-col space-y-16 items-center">
+      <div className="min-w-40 max-w-2xl px-16 mx-auto flex flex-col space-y-16 items-center relative">
         <h1 className="text-neutral-600 text-2xl font-bold">🥕 트윗 목록</h1>
         <TweetsList
           tweets={tweets}
@@ -72,6 +73,7 @@ export default function Home() {
           goToNextPage={goToNextPage}
         />
       </div>
+      <AddTweet />
     </main>
   );
 }

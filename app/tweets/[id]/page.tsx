@@ -34,7 +34,7 @@ export default async function TweetDetails({
             전
           </p>
         </div>
-        <p className="text-lg p-4 rounded-xl bg-neutral-100 text-neutral-700">
+        <p className="font-light p-4 rounded-xl bg-neutral-100 text-neutral-700 w-full">
           {tweetDetails.tweet}
         </p>
         <div className="flex items-center gap-4">
