@@ -14,6 +14,7 @@ export async function getUser(id: number) {
       created_at: true,
       email: true,
       id: true,
+      avatar: true,
       username: true,
       _count: {
         select: {

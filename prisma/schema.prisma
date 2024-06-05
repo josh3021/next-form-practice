@@ -14,25 +14,29 @@ datasource db {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  username   String   @unique
-  password   String
-  email      String   @unique
-  bio        String?
-  tweets     Tweet[]
-  likes      Like[]
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id            Int           @id @default(autoincrement())
+  username      String        @unique
+  password      String
+  email         String        @unique
+  bio           String?
+  avatar        String?
+  tweets        Tweet[]
+  likes         Like[]
+  comments      Comment[]
+  like_comments CommentLike[]
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
 }
 
 model Tweet {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   tweet      String
-  user       User     @relation(fields: [userId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
   userId     Int
   likes      Like[]
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  comments   Comment[]
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
 }
 
 model Like {
@@ -41,5 +45,26 @@ model Like {
   userId     Int
   tweet      Tweet    @relation(fields: [tweetId], references: [id])
   tweetId    Int
+  created_at DateTime @default(now())
+}
+
+model Comment {
+  id            Int           @id @default(autoincrement())
+  comment       String
+  user          User          @relation(fields: [userId], references: [id])
+  userId        Int
+  tweet         Tweet         @relation(fields: [tweetId], references: [id])
+  tweetId       Int
+  comment_likes CommentLike[]
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+}
+
+model CommentLike {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  comment    Comment  @relation(fields: [commentId], references: [id])
+  commentId  Int
   created_at DateTime @default(now())
 }

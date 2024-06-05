@@ -1,7 +1,9 @@
 import { Logout } from "@/components/logout";
 import { getSession } from "@/lib/session";
+import { UserIcon } from "@heroicons/react/24/outline";
 import { formatDistance } from "date-fns";
 import { ko } from "date-fns/locale";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getUser } from "./actions";
 
@@ -18,10 +20,12 @@ export default async function ProfilePage() {
         <Logout />
       </div>
       <div className="flex flex-col items-center justify-center gap-4">
-        <div className="bg-gray-100 flex justify-center items-center rounded-full size-32 ring ring-offset-2 ring-gray-200">
-          <span className="text-7xl font-bold">
-            {user.username.replace(/[^a-zA-Z ]/g, "").charAt(0)}
-          </span>
+        <div className="relative bg-gray-100 flex justify-center items-center overflow-hidden rounded-full size-32 ring ring-offset-2 ring-gray-200">
+          {user.avatar ? (
+            <Image src={user.avatar} fill alt={user.username} />
+          ) : (
+            <UserIcon className="size-28 text-neutral-700" />
+          )}
         </div>
         <div className="flex flex-col gap-1 items-center">
           <h2 className="text-2xl font-medium">{user.username}</h2>
