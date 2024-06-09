@@ -1,14 +1,48 @@
-import { GoBackButton } from "@/components/tweets/button";
-import {
-  HeartIcon as HeartOutlineIcon,
-  UserIcon,
-} from "@heroicons/react/24/outline";
-import { HeartIcon as HeartSolidIcon } from "@heroicons/react/24/solid";
+"use server";
+
+import { GoBackButton, TweetLikeButton } from "@/components/tweets/button";
+import { CommentsList } from "@/components/tweets/comments-list";
+import db from "@/lib/db";
+import { getSession } from "@/lib/session";
+import { UserIcon } from "@heroicons/react/24/outline";
 import { formatDistance } from "date-fns";
 import { ko } from "date-fns/locale";
+import { unstable_cache as nextCache } from "next/cache";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getIsSelfLiked, getTweetDetails } from "./actions";
+import { getComments, getTweetDetails } from "./actions";
+
+export async function getLikeStatus(tweetId: number, sessionId: number) {
+  const [likeCount, liked] = await Promise.all([
+    db.like.count({
+      where: {
+        tweetId,
+      },
+    }),
+    db.like.findUnique({
+      where: { id: { tweetId, userId: sessionId } },
+    }),
+  ]);
+  return { likeCount, isLiked: !!liked };
+}
+
+async function getCachedTweetDetails(tweetId: number) {
+  const session = await getSession();
+  if (!session.id) return null;
+  const cachedOperation = nextCache(getTweetDetails, [`tweet`], {
+    tags: [`tweet-${tweetId}`],
+  });
+  return cachedOperation(tweetId);
+}
+
+async function getCachedLikeStatus(tweetId: number) {
+  const session = await getSession();
+  if (!session.id) return { likeCount: 0, isLiked: false };
+  const cachedOperation = nextCache(getLikeStatus, [`tweet-like-${tweetId}`], {
+    tags: [`tweet-like-${tweetId}`],
+  });
+  return cachedOperation(tweetId, session.id);
+}
 
 export default async function TweetDetails({
   params,
@@ -17,20 +51,31 @@ export default async function TweetDetails({
 }) {
   const id = Number(params.id);
   if (isNaN(id)) return notFound();
+  // const tweetDetails = await getCachedTweetDetails(id);
   const tweetDetails = await getTweetDetails(id);
   if (!tweetDetails) return notFound();
-  const isSelfLiked = await getIsSelfLiked(
-    tweetDetails.id,
-    tweetDetails.user.id
-  );
+  const comments = await getComments(id, 10, 0);
+  const session = await getSession();
+  const me = await db.user.findUnique({
+    where: {
+      id: session.id,
+    },
+    select: {
+      id: true,
+      avatar: true,
+      username: true,
+    },
+  });
+  if (!me) return notFound();
+  const { likeCount, isLiked } = await getCachedLikeStatus(tweetDetails.id);
   return (
     <main className="min-h-screen">
-      <div className="min-w-40 max-w-4xl px-4 mx-auto py-8 flex flex-col space-y-5 items-center">
+      <div className="min-w-40 max-w-4xl mx-auto py-8 flex flex-col space-y-5 items-center">
         <div className="w-full">
           <GoBackButton />
         </div>
-        <div className="p-4 rounded-xl text-neutral-700 w-full">
-          <div className="flex gap-4 items-start">
+        <div className="rounded-xl text-neutral-700 w-full">
+          <div className="flex gap-4 items-start px-8">
             <div className="size-10 rounded-full relative ring-1 ring-offset-1 ring-neutral-300 overflow-hidden">
               {tweetDetails.user.avatar ? (
                 <Image
@@ -59,72 +104,20 @@ export default async function TweetDetails({
               <div className="items-start">
                 <p className="text-sm">{tweetDetails.tweet}</p>
                 <div className="flex items-center">
-                  <div className="flex items-center text-pink-400 font-medium">
-                    {isSelfLiked ? (
-                      <HeartSolidIcon className="size-5" />
-                    ) : (
-                      <HeartOutlineIcon className="size-5" />
-                    )}
-                    <span className="font-light ml-1">
-                      {tweetDetails._count.likes}
-                    </span>
-                  </div>
+                  <TweetLikeButton
+                    tweetId={tweetDetails.id}
+                    isLiked={isLiked}
+                    likeCount={likeCount}
+                  />
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="w-full">
-          {tweetDetails.comments.map((comment) => (
-            <div
-              key={comment.id}
-              className="p-4 rounded-xl text-neutral-700 w-full"
-            >
-              <div className="flex gap-4 items-start">
-                <div className="size-10 rounded-full relative ring-1 ring-offset-1 ring-neutral-300 overflow-hidden">
-                  {comment.user.avatar ? (
-                    <Image
-                      src={comment.user.avatar}
-                      fill
-                      className="object-cover"
-                      alt={comment.user.username}
-                    />
-                  ) : (
-                    <UserIcon className="size-8" />
-                  )}
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center">
-                    <span className="font-medium mr-1">
-                      {comment.user.username}
-                    </span>
-                    <span className="font-light text-xs text-neutral-700">
-                      {formatDistance(comment.user.updated_at, new Date(), {
-                        locale: ko,
-                      })}{" "}
-                      전
-                    </span>
-                  </div>
-                  <div className="items-start">
-                    <p className="text-sm">{comment.comment}</p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1 text-pink-400 font-medium">
-                        {comment.user.id === tweetDetails.user.id ? (
-                          <HeartSolidIcon className="size-5" />
-                        ) : (
-                          <HeartOutlineIcon className="size-5" />
-                        )}
-                        <span className="font-light">
-                          {comment._count.comment_likes}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+          <CommentsList
+            initialComments={comments}
+            tweetId={tweetDetails.id}
+            me={me}
+          />
         </div>
       </div>
     </main>
