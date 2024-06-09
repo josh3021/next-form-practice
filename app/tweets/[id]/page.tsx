@@ -12,7 +12,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getComments, getTweetDetails } from "./actions";
 
-export async function getLikeStatus(tweetId: number, sessionId: number) {
+async function getLikeStatus(tweetId: number, sessionId: number) {
   const [likeCount, liked] = await Promise.all([
     db.like.count({
       where: {
@@ -26,14 +26,14 @@ export async function getLikeStatus(tweetId: number, sessionId: number) {
   return { likeCount, isLiked: !!liked };
 }
 
-async function getCachedTweetDetails(tweetId: number) {
-  const session = await getSession();
-  if (!session.id) return null;
-  const cachedOperation = nextCache(getTweetDetails, [`tweet`], {
-    tags: [`tweet-${tweetId}`],
-  });
-  return cachedOperation(tweetId);
-}
+// async function getCachedTweetDetails(tweetId: number) {
+//   const session = await getSession();
+//   if (!session.id) return null;
+//   const cachedOperation = nextCache(getTweetDetails, [`tweet`], {
+//     tags: [`tweet-${tweetId}`],
+//   });
+//   return cachedOperation(tweetId);
+// }
 
 async function getCachedLikeStatus(tweetId: number) {
   const session = await getSession();

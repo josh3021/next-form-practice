@@ -63,6 +63,7 @@ export function CommentsList({
       isNew: false,
     }));
 
+    //@ts-ignore
     setComments((prev) => [...prev, ...nCs]);
     setPage((prev) => prev + 1);
     // loadMoreAction(tweetId);
@@ -82,6 +83,7 @@ export function CommentsList({
     //     },
     //   },
     // ]);
+    //@ts-ignore
     setComments((prev) => [
       {
         isNew: true,
